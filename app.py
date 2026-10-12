@@ -1,5 +1,6 @@
 import os
 import pickle
+import traceback
 from collections import defaultdict
 import numpy as np
 import pandas as pd
@@ -58,9 +59,13 @@ st.markdown("""
 
 @st.cache_resource
 def load_model_and_metadata():
-    # Load the unified pipeline file
-    with open('model.pkl', 'rb') as f:
-        model_pipeline = pickle.load(f)
+    try:
+        # Load the unified pipeline file
+        with open('model.pkl', 'rb') as f:
+            model_pipeline = pickle.load(f)
+    except Exception:
+        err = traceback.format_exc()
+        return None, {}, [], [], [], err
 
     # Load mapping options if available for rich UI dropdowns
     univ_to_progs = defaultdict(list)
@@ -98,14 +103,15 @@ def load_model_and_metadata():
         except Exception:
             pass
 
-    return model_pipeline, univ_to_progs, universities, categories, rounds
+    return model_pipeline, univ_to_progs, universities, categories, rounds, None
 
-# Load model pipeline and metadata
-try:
-    model_pipeline, univ_to_progs, universities, categories, rounds = load_model_and_metadata()
-except Exception as e:
-    st.error(f"Error loading pipeline model: {e}")
-    st.info("Tip: Ensure model.pkl is in the project root directory and scikit-learn version matches.")
+# Load model pipeline and metadata safely
+model_pipeline, univ_to_progs, universities, categories, rounds, error_msg = load_model_and_metadata()
+
+if error_msg:
+    st.error("⚠️ Failed to load ML model pipeline")
+    st.code(error_msg, language="text")
+    st.info("Ensure all dependencies match the training environment (scikit-learn, lightgbm, numpy).")
     st.stop()
 
 # Header
