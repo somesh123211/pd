@@ -1,10 +1,20 @@
 import os
 import pickle
 import traceback
-from collections import defaultdict
+from collections import defaultdict, UserList
 import numpy as np
 import pandas as pd
 import streamlit as st
+
+# Compatibility patch for scikit-learn ColumnTransformer unpickling across versions
+try:
+    import sklearn.compose._column_transformer as _ct
+    if not hasattr(_ct, '_RemainderColsList'):
+        class _RemainderColsList(UserList):
+            pass
+        _ct._RemainderColsList = _RemainderColsList
+except Exception:
+    pass
 
 # Streamlit Page Configuration
 st.set_page_config(
